@@ -31,6 +31,7 @@ func NewClient(userId string, clientId string, systemId string, socket *websocke
 		ConnectTime: uint64(time.Now().Unix()),
 		IsDeleted:   false,
 	}
+
 }
 
 func (c *Client) Read() {
