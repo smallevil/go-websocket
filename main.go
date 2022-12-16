@@ -15,7 +15,7 @@ import (
 
 func init() {
 	setting.Setup()
-	log.Setup()
+	log.Setup(false)
 }
 
 func main() {

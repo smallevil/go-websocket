@@ -11,8 +11,14 @@ import (
 	"strings"
 )
 
-func Setup() {
+func Setup(debug bool) {
 	basePath := getCurrentDirectory()
+
+	logrus.SetLevel(logrus.DebugLevel)
+
+	if !debug {
+		logrus.SetLevel(logrus.WarnLevel)
+	}
 
 	writer, err := rotatelogs.New(
 		basePath+"/log/info/"+"%Y-%m-%d"+".log",

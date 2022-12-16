@@ -13,11 +13,12 @@ import (
 type accountInfo struct {
 	SystemId     string `json:"systemId"`
 	RegisterTime int64  `json:"registerTime"`
+	HookUrl string  `json:"hookUrl"`
 }
 
 var SystemMap sync.Map
 
-func Register(systemId string) (err error) {
+func Register(systemId string, hookUrl string) (err error) {
 	//校验是否为空
 	if len(systemId) == 0 {
 		return errors.New("系统ID不能为空")
@@ -26,6 +27,7 @@ func Register(systemId string) (err error) {
 	accountInfo := accountInfo{
 		SystemId:     systemId,
 		RegisterTime: time.Now().Unix(),
+		HookUrl:	  hookUrl,
 	}
 
 	if util.IsCluster() {

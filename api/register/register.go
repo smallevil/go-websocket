@@ -13,6 +13,7 @@ type Controller struct {
 
 type inputData struct {
 	SystemId string `json:"systemId" validate:"required"`
+	HookUrl string `json:"hookUrl"`
 }
 
 func (c *Controller) Run(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +29,7 @@ func (c *Controller) Run(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = servers.Register(inputData.SystemId)
+	err = servers.Register(inputData.SystemId, inputData.HookUrl)
 	if err != nil {
 		api.Render(w, retcode.FAIL, err.Error(), []string{})
 		return

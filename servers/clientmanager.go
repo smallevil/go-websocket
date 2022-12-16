@@ -9,6 +9,11 @@ import (
 	"github.com/woodylan/go-websocket/tools/util"
 	"sync"
 	"time"
+	"net/http"
+	"net/url"
+	"strings"
+	"io/ioutil"
+	//"fmt"
 )
 
 // 连接管理
@@ -56,10 +61,14 @@ func (manager *ClientManager) Start() {
 func (manager *ClientManager) EventConnect(client *Client) {
 	manager.AddClient(client)
 
+	CallHookUrl(client, "online")
+
 	log.WithFields(log.Fields{
 		"host":     setting.GlobalSetting.LocalHost,
 		"port":     setting.CommonSetting.HttpPort,
 		"clientId": client.ClientId,
+		"userId":	client.UserId,
+		"systemId": client.SystemId,
 		"counts":   Manager.Count(),
 	}).Info("客户端已连接")
 }
@@ -85,10 +94,14 @@ func (manager *ClientManager) EventDisconnect(client *Client) {
 		}
 	}
 
+	CallHookUrl(client, "offline")
+
 	log.WithFields(log.Fields{
 		"host":     setting.GlobalSetting.LocalHost,
 		"port":     setting.CommonSetting.HttpPort,
 		"clientId": client.ClientId,
+		"userId":	client.UserId,
+		"systemId": client.SystemId,
 		"counts":   Manager.Count(),
 		"seconds":  uint64(time.Now().Unix()) - client.ConnectTime,
 	}).Info("客户端已断开")
@@ -268,4 +281,64 @@ func (manager *ClientManager) GetSystemClientList(systemId string) []string {
 	manager.SystemClientsLock.RLock()
 	defer manager.SystemClientsLock.RUnlock()
 	return manager.SystemClients[systemId]
+}
+
+// hook回调
+func CallHookUrl(client *Client, status string) {
+	/*
+	ai, ok := SystemMap.Load(client.SystemId)
+	fmt.Println(ai)
+	fmt.Println(ok)
+	fmt.Println(client)
+	*/
+
+	var ai accountInfo
+	v, ok := SystemMap.Load(client.SystemId)
+	if !ok {
+		return
+	}
+	ai = v.(accountInfo)
+
+	if len(ai.HookUrl) == 0 {
+		return
+	}
+
+	values := url.Values{}
+	values.Add("system_id", ai.SystemId)
+	values.Add("client_id", client.ClientId)
+	values.Add("user_id", client.UserId)
+	values.Add("status", status)
+
+	httpClient := http.Client{
+		Timeout:   2 * time.Second,
+		Transport: &http.Transport{DisableKeepAlives: true},
+	}
+	resp, err := httpClient.Post(ai.HookUrl, "application/x-www-form-urlencoded", strings.NewReader(values.Encode()))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"host":     ai.HookUrl,
+			"clientId": client.ClientId,
+			"userId":	client.UserId,
+			"systemId": client.SystemId,
+			"status":	status,
+			"seconds":  uint64(time.Now().Unix()) - client.ConnectTime,
+			"error":	err,
+		}).Warn("Hook请求失败")
+		return
+	}
+
+	defer resp.Body.Close()
+	_, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"host":     ai.HookUrl,
+			"clientId": client.ClientId,
+			"userId":	client.UserId,
+			"systemId": client.SystemId,
+			"status":	status,
+			"seconds":  uint64(time.Now().Unix()) - client.ConnectTime,
+			"error":	err,
+		}).Warn("Hook读取失败")
+		return
+	}
 }

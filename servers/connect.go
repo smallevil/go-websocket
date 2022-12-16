@@ -41,6 +41,7 @@ func (c *Controller) Run(w http.ResponseWriter, r *http.Request) {
 
 	//解析参数
 	systemId := r.FormValue("systemId")
+	userId := r.FormValue("userId")
 	if len(systemId) == 0 {
 		_ = Render(conn, "", "", retcode.SYSTEM_ID_ERROR, "系统ID不能为空", []string{})
 		_ = conn.Close()
@@ -49,7 +50,7 @@ func (c *Controller) Run(w http.ResponseWriter, r *http.Request) {
 
 	clientId := util.GenClientId()
 
-	clientSocket := NewClient(clientId, systemId, conn)
+	clientSocket := NewClient(userId, clientId, systemId, conn)
 
 	Manager.AddClient2SystemClient(systemId, clientSocket)
 
