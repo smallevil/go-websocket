@@ -30,8 +30,9 @@ type RetData struct {
 	Data       interface{} `json:"data"`
 }
 
-// 心跳间隔
-var heartbeatInterval = 25 * time.Second
+// 心跳间隔,服务端主动循环ping所有客户端,此处放在到2分钟
+// 一般客户端主动ping服务器端可以在15-45秒之间
+var heartbeatInterval = 120 * time.Second
 
 func init() {
 	ToClientChan = make(chan clientInfo, 1000)
@@ -242,6 +243,7 @@ func PingTimer() {
 			<-ticker.C
 			//发送心跳
 			for clientId, conn := range Manager.AllClient() {
+				log.Debugf("心跳检查: %s", clientId)
 				if err := conn.Socket.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(time.Second)); err != nil {
 					Manager.DisConnect <- conn
 					log.Errorf("发送心跳失败: %s 总连接数：%d", clientId, Manager.Count())
