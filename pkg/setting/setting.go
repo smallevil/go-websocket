@@ -23,6 +23,12 @@ type etcdConf struct {
 
 var EtcdSetting = &etcdConf{}
 
+type projectConf struct {
+	Systemid []string
+}
+
+var ProjectSetting = &projectConf{}
+
 type global struct {
 	LocalHost      string //本机内网IP
 	ServerList     map[string]string
@@ -44,6 +50,7 @@ func Setup() {
 
 	mapTo("common", CommonSetting)
 	mapTo("etcd", EtcdSetting)
+	mapTo("project", ProjectSetting)
 
 	GlobalSetting = &global{
 		LocalHost:  getIntranetIp(),

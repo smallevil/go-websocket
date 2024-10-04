@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"github.com/woodylan/go-websocket/define"
 	"github.com/woodylan/go-websocket/pkg/etcd"
 	"github.com/woodylan/go-websocket/pkg/setting"
@@ -33,8 +34,32 @@ func main() {
 
 	fmt.Printf("服务器启动成功，端口号：%s\n", setting.CommonSetting.HttpPort)
 
+	//注册默认项目
+	restoreSystemId()
+
 	if err := http.ListenAndServe(":"+setting.CommonSetting.HttpPort, nil); err != nil {
 		panic(err)
+	}
+}
+
+func restoreSystemId() {
+
+	for _, value := range setting.ProjectSetting.Systemid{
+		systemId := ""
+		hookUrl := ""
+
+		s1 := strings.Split(value, "[")
+		if len(s1) == 2 {
+			s2 := strings.Split(s1[1], "]")
+			systemId = s1[0]
+			hookUrl = s2[0]
+		} else {
+			systemId = s1[0]
+		}
+
+		fmt.Printf("默认注册系统项目  system_id:%s  hool_url:%s\n", systemId, hookUrl)
+
+		servers.Register(systemId, hookUrl)
 	}
 }
 

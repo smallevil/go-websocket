@@ -89,6 +89,9 @@ func (manager *ClientManager) EventConnect(client *Client) {
 
 // 断开连接时间
 func (manager *ClientManager) EventDisconnect(client *Client) {
+
+	CallHookUrl(client, "offline")
+
 	//关闭连接
 	_ = client.Socket.Close()
 	manager.DelClient(client)
@@ -107,8 +110,6 @@ func (manager *ClientManager) EventDisconnect(client *Client) {
 			SendMessage2Group(client.SystemId, sendUserId, groupName, retcode.OFFLINE_MESSAGE_CODE, "客户端下线", &data)
 		}
 	}
-
-	CallHookUrl(client, "offline")
 
 	log.WithFields(log.Fields{
 		"host":     setting.GlobalSetting.LocalHost,
