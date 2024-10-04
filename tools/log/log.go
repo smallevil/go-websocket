@@ -21,27 +21,28 @@ func Setup(debug bool) {
 	}
 
 	writer, err := rotatelogs.New(
-		basePath+"/log/info/"+"%Y-%m-%d"+".log",
+		basePath+"/log/"+"%Y-%m-%d"+".log",
 		rotatelogs.WithLinkName("log.log"), // 生成软链，指向最新日志文件
 		//rotatelogs.WithMaxAge(maxAge),      // 文件最大保存时间
 	)
 	if err != nil {
 		logrus.Errorf("config local file system logger error. %+v", errors.WithStack(err))
 	}
-
+	/*
 	errorWriter, err := rotatelogs.New(
-		basePath+"/log/error/"+"%Y-%m-%d"+".log",
+		basePath+"/log/"+"%Y-%m-%d"+".log",
 		rotatelogs.WithLinkName("error.log"), // 生成软链，指向最新日志文件
 		//rotatelogs.WithMaxAge(maxAge),        // 文件最大保存时间
 	)
 	if err != nil {
 		logrus.Errorf("config local file system logger error. %+v", errors.WithStack(err))
 	}
+	*/
 	lfHook := lfshook.NewHook(lfshook.WriterMap{
 		logrus.DebugLevel: writer, // 为不同级别设置不同的输出目的
 		logrus.InfoLevel:  writer,
 		logrus.WarnLevel:  writer,
-		logrus.ErrorLevel: errorWriter,
+		logrus.ErrorLevel: writer,
 		logrus.FatalLevel: writer,
 		logrus.PanicLevel: writer,
 	}, &logrus.JSONFormatter{
