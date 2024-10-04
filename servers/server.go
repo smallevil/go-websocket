@@ -32,7 +32,8 @@ type RetData struct {
 
 // 心跳间隔,服务端主动循环ping所有客户端,此处放在到2分钟
 // 一般客户端主动ping服务器端可以在15-45秒之间
-var heartbeatInterval = 120 * time.Second
+var clientHeartbeatInterval uint64 = 35
+var serverHeartbeatInterval = 120 * time.Second
 
 func init() {
 	ToClientChan = make(chan clientInfo, 1000)
@@ -94,6 +95,36 @@ func CloseClient(clientId, systemId string) {
 	}
 
 	return
+}
+
+//设置客户端扩展字段
+func SetClientExtend(systemId string, clientId string, userId string, extend string) {
+	//如果是集群则用redis共享数据
+	if util.IsCluster() {
+		//判断key是否存在
+		addr, _, _, isLocal, err := util.GetAddrInfoAndIsLocal(clientId)
+		if err != nil {
+			log.Errorf("%s", err)
+			return
+		}
+
+		if isLocal {
+			if client, err := Manager.GetByClientId(clientId); err == nil {
+				//本地
+				Manager.SetClientExtend(client, userId, extend)
+			} else {
+				log.Error(err)
+			}
+		} else {
+			//发送到指定的机器
+			SendRpcSetExtend(addr, systemId, clientId, userId, extend)
+		}
+	} else {
+		if client, err := Manager.GetByClientId(clientId); err == nil {
+			//如果是单机，就直接本地修改
+			Manager.SetClientExtend(client, userId, extend)
+		}
+	}
 }
 
 //添加客户端到分组
@@ -200,6 +231,7 @@ func CloseLocalClient(clientId, systemId string) {
 func WriteMessage() {
 	for {
 		clientInfo := <-ToClientChan
+
 		log.WithFields(log.Fields{
 			"host":       setting.GlobalSetting.LocalHost,
 			"port":       setting.CommonSetting.HttpPort,
@@ -210,6 +242,7 @@ func WriteMessage() {
 			"msg":        clientInfo.Msg,
 			"data":       clientInfo.Data,
 		}).Info("发送到本机")
+
 		if conn, err := Manager.GetByClientId(clientInfo.ClientId); err == nil && conn != nil {
 			if err := Render(conn.Socket, clientInfo.MessageId, clientInfo.SendUserId, clientInfo.Code, clientInfo.Msg, clientInfo.Data); err != nil {
 				Manager.DisConnect <- conn
@@ -234,10 +267,11 @@ func Render(conn *websocket.Conn, messageId string, sendUserId string, code int,
 	})
 }
 
+/*
 //启动定时器进行心跳检测
 func PingTimer() {
 	go func() {
-		ticker := time.NewTicker(heartbeatInterval)
+		ticker := time.NewTicker(serverHeartbeatInterval)
 		defer ticker.Stop()
 		for {
 			<-ticker.C
@@ -247,6 +281,47 @@ func PingTimer() {
 				if err := conn.Socket.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(time.Second)); err != nil {
 					Manager.DisConnect <- conn
 					log.Errorf("发送心跳失败: %s 总连接数：%d", clientId, Manager.Count())
+				} else {
+					if client, err := Manager.GetByClientId(clientId); err == nil {
+						Manager.ClientIdMap[clientId].LastTime = uint64(time.Now().Unix())
+
+						log.WithFields(log.Fields{
+							"clientId": client.ClientId,
+							"userId":	client.UserId,
+							"systemId": client.SystemId,
+							"ConnectTime":  client.ConnectTime,
+						}).Warn("心跳检查")
+					}
+				}
+			}
+		}
+
+	}()
+}
+*/
+
+
+//启动定时器进行心跳检测
+func PingTimer() {
+	go func() {
+		ticker := time.NewTicker(serverHeartbeatInterval)
+		defer ticker.Stop()
+		for {
+			<-ticker.C
+			//发送心跳
+			for clientId, conn := range Manager.AllClient() {
+				log.Debugf("心跳检查: %s", clientId)
+
+				if uint64(time.Now().Unix()) - Manager.ClientIdMap[clientId].LastTime > clientHeartbeatInterval {
+					if err := conn.Socket.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(time.Second)); err == nil {
+						//当客户端的ping过期时,此处服务器端主动ping一次
+						//通时更新时间,不通时断开
+						log.Debugf("服务器主动Ping: %s", clientId)
+						Manager.resetClientLastTime(conn)
+					} else {
+						Manager.DisConnect <- conn
+						log.Warnf("发送心跳失败: %s 总连接数：%d", clientId, Manager.Count())
+					}
 				}
 			}
 		}

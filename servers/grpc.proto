@@ -25,6 +25,13 @@ message BindGroupReq {
     string extend = 5;
 }
 
+message SetExtendReq {
+    string systemId = 1;
+    string clientId = 2;
+    string userId = 3;
+    string extend = 4;
+}
+
 message Send2GroupReq {
     string systemId = 1;
     string messageId = 2;
@@ -58,6 +65,9 @@ message CloseClientReply {
 message BindGroupReply {
 }
 
+message SetExtendReply {
+}
+
 message Send2GroupReply {
 }
 
@@ -74,6 +84,8 @@ service CommonService {
     rpc CloseClient (CloseClientReq) returns (CloseClientReply) {
     }
     rpc BindGroup (BindGroupReq) returns (BindGroupReply) {
+    }
+    rpc SetExtend (SetExtendReq) returns (SetExtendReply) {
     }
     rpc Send2Group (Send2GroupReq) returns (Send2GroupReply) {
     }

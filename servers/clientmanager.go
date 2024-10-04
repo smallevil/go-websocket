@@ -3,12 +3,14 @@ package servers
 import (
 	"encoding/json"
 	"errors"
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"github.com/woodylan/go-websocket/define/retcode"
 	"github.com/woodylan/go-websocket/pkg/setting"
 	"github.com/woodylan/go-websocket/tools/util"
 	"sync"
 	"time"
+	"strconv"
 	"net/http"
 	"net/url"
 	"strings"
@@ -30,6 +32,8 @@ type ClientManager struct {
 	SystemClientsLock sync.RWMutex
 	SystemClients     map[string][]string
 }
+
+type pongHandler func(string) error
 
 func NewClientManager() (clientManager *ClientManager) {
 	clientManager = &ClientManager{
@@ -60,6 +64,16 @@ func (manager *ClientManager) Start() {
 // 建立连接事件
 func (manager *ClientManager) EventConnect(client *Client) {
 	manager.AddClient(client)
+
+	client.Socket.SetPingHandler(func(string) error {
+		//log.Print("PING")
+		//manager.ClientIdMapLock.Lock()
+		//defer manager.ClientIdMapLock.Unlock()
+		//manager.ClientIdMap[client.ClientId].LastTime = uint64(time.Now().Unix())
+		manager.resetClientLastTime(client)
+
+		return client.Socket.WriteMessage(websocket.PongMessage, []byte(""))
+	})
 
 	CallHookUrl(client, "online")
 
@@ -111,6 +125,14 @@ func (manager *ClientManager) EventDisconnect(client *Client) {
 	client = nil
 }
 
+// 更新client最后活跃时间
+func (manager *ClientManager) resetClientLastTime(client *Client) {
+	manager.ClientIdMapLock.Lock()
+	defer manager.ClientIdMapLock.Unlock()
+
+	client.LastTime = uint64(time.Now().Unix())
+}
+
 // 添加客户端
 func (manager *ClientManager) AddClient(client *Client) {
 	manager.ClientIdMapLock.Lock()
@@ -131,6 +153,7 @@ func (manager *ClientManager) AllClient() map[string]*Client {
 func (manager *ClientManager) Count() int {
 	manager.ClientIdMapLock.RLock()
 	defer manager.ClientIdMapLock.RUnlock()
+
 	return len(manager.ClientIdMap)
 }
 
@@ -199,11 +222,31 @@ func (manager *ClientManager) SendMessage2LocalSystem(systemId, messageId string
 	}
 }
 
+// 设置扩展字段值
+func (manager *ClientManager) SetClientExtend(client *Client, userId string, extend string) {
+	manager.ClientIdMapLock.Lock()
+	defer manager.ClientIdMapLock.Unlock()
+
+	if len(userId) > 0 {
+		client.UserId = userId
+	}
+
+	if len(extend) > 0 {
+		client.Extend = extend
+	}
+}
+
 // 添加到本地分组
 func (manager *ClientManager) AddClient2LocalGroup(groupName string, client *Client, userId string, extend string) {
 	//标记当前客户端的userId
-	client.UserId = userId
-	client.Extend = extend
+
+	if len(userId) > 0 {
+		client.UserId = userId
+	}
+
+	if len(extend) > 0 {
+		client.Extend = extend
+	}
 
 	//判断之前是否有添加过
 	for _, groupValue := range client.GroupList {
@@ -303,10 +346,22 @@ func CallHookUrl(client *Client, status string) {
 		return
 	}
 
+	clientID := client.ClientId
+	userID := client.UserId
+	extend := client.Extend
+	ip := client.Ip
+	connectTime := client.ConnectTime
+	lastTime := client.LastTime
+
 	values := url.Values{}
 	values.Add("system_id", ai.SystemId)
-	values.Add("client_id", client.ClientId)
-	values.Add("user_id", client.UserId)
+	values.Add("client_id", clientID)
+	values.Add("user_id", userID)
+	values.Add("extend", extend)
+	values.Add("ip", ip)
+	values.Add("connect_time", strconv.FormatUint(connectTime, 10))
+	values.Add("last_time", strconv.FormatUint(lastTime, 10))
+	values.Add("keep_seconds", strconv.FormatUint(lastTime - connectTime, 10))
 	values.Add("status", status)
 
 	httpClient := http.Client{
@@ -317,11 +372,13 @@ func CallHookUrl(client *Client, status string) {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"host":     ai.HookUrl,
-			"clientId": client.ClientId,
-			"userId":	client.UserId,
-			"systemId": client.SystemId,
+			"clientId": clientID,
+			"ip": 		ip,
+			"userId":	userID,
+			"extend":	extend,
+			"systemId": ai.SystemId,
 			"status":	status,
-			"seconds":  uint64(time.Now().Unix()) - client.ConnectTime,
+			"keep_seconds":  uint64(time.Now().Unix()) - connectTime,
 			"error":	err,
 		}).Warn("Hook请求失败")
 		return
@@ -332,11 +389,13 @@ func CallHookUrl(client *Client, status string) {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"host":     ai.HookUrl,
-			"clientId": client.ClientId,
-			"userId":	client.UserId,
-			"systemId": client.SystemId,
+			"clientId": clientID,
+			"ip": 		ip,
+			"userId":	userID,
+			"extend":	extend,
+			"systemId": ai.SystemId,
 			"status":	status,
-			"seconds":  uint64(time.Now().Unix()) - client.ConnectTime,
+			"keep_seconds":  uint64(time.Now().Unix()) - connectTime,
 			"error":	err,
 		}).Warn("Hook读取失败")
 		return

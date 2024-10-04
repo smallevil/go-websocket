@@ -227,6 +227,69 @@ func (m *BindGroupReq) GetExtend() string {
 	return ""
 }
 
+type SetExtendReq struct {
+	SystemId             string   `protobuf:"bytes,1,opt,name=systemId,proto3" json:"systemId,omitempty"`
+	ClientId             string   `protobuf:"bytes,2,opt,name=clientId,proto3" json:"clientId,omitempty"`
+	UserId               string   `protobuf:"bytes,3,opt,name=userId,proto3" json:"userId,omitempty"`
+	Extend               string   `protobuf:"bytes,4,opt,name=extend,proto3" json:"extend,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SetExtendReq) Reset()         { *m = SetExtendReq{} }
+func (m *SetExtendReq) String() string { return proto.CompactTextString(m) }
+func (*SetExtendReq) ProtoMessage()    {}
+func (*SetExtendReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_30edbedfc0173ed4, []int{2}
+}
+
+func (m *SetExtendReq) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SetExtendReq.Unmarshal(m, b)
+}
+func (m *SetExtendReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SetExtendReq.Marshal(b, m, deterministic)
+}
+func (m *SetExtendReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetExtendReq.Merge(m, src)
+}
+func (m *SetExtendReq) XXX_Size() int {
+	return xxx_messageInfo_SetExtendReq.Size(m)
+}
+func (m *SetExtendReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetExtendReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SetExtendReq proto.InternalMessageInfo
+
+func (m *SetExtendReq) GetSystemId() string {
+	if m != nil {
+		return m.SystemId
+	}
+	return ""
+}
+
+func (m *SetExtendReq) GetClientId() string {
+	if m != nil {
+		return m.ClientId
+	}
+	return ""
+}
+
+func (m *SetExtendReq) GetUserId() string {
+	if m != nil {
+		return m.UserId
+	}
+	return ""
+}
+
+func (m *SetExtendReq) GetExtend() string {
+	if m != nil {
+		return m.Extend
+	}
+	return ""
+}
+
 type Send2GroupReq struct {
 	SystemId             string   `protobuf:"bytes,1,opt,name=systemId,proto3" json:"systemId,omitempty"`
 	MessageId            string   `protobuf:"bytes,2,opt,name=messageId,proto3" json:"messageId,omitempty"`
@@ -533,6 +596,37 @@ func (m *BindGroupReply) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_BindGroupReply proto.InternalMessageInfo
 
+type SetExtendReply struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SetExtendReply) Reset()         { *m = SetExtendReply{} }
+func (m *SetExtendReply) String() string { return proto.CompactTextString(m) }
+func (*SetExtendReply) ProtoMessage()    {}
+func (*SetExtendReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_30edbedfc0173ed4, []int{8}
+}
+
+func (m *SetExtendReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SetExtendReply.Unmarshal(m, b)
+}
+func (m *SetExtendReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SetExtendReply.Marshal(b, m, deterministic)
+}
+func (m *SetExtendReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetExtendReply.Merge(m, src)
+}
+func (m *SetExtendReply) XXX_Size() int {
+	return xxx_messageInfo_SetExtendReply.Size(m)
+}
+func (m *SetExtendReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetExtendReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SetExtendReply proto.InternalMessageInfo
+
 type Send2GroupReply struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -638,12 +732,14 @@ func init() {
 	proto.RegisterType((*Send2ClientReq)(nil), "Send2ClientReq")
 	proto.RegisterType((*CloseClientReq)(nil), "CloseClientReq")
 	proto.RegisterType((*BindGroupReq)(nil), "BindGroupReq")
+	proto.RegisterType((*SetExtendReq)(nil), "SetExtendReq")
 	proto.RegisterType((*Send2GroupReq)(nil), "Send2GroupReq")
 	proto.RegisterType((*Send2SystemReq)(nil), "Send2SystemReq")
 	proto.RegisterType((*GetGroupClientsReq)(nil), "GetGroupClientsReq")
 	proto.RegisterType((*Send2ClientReply)(nil), "Send2ClientReply")
 	proto.RegisterType((*CloseClientReply)(nil), "CloseClientReply")
 	proto.RegisterType((*BindGroupReply)(nil), "BindGroupReply")
+	proto.RegisterType((*SetExtendReply)(nil), "SetExtendReply")
 	proto.RegisterType((*Send2GroupReply)(nil), "Send2GroupReply")
 	proto.RegisterType((*Send2SystemReply)(nil), "Send2SystemReply")
 	proto.RegisterType((*GetGroupClientsReply)(nil), "GetGroupClientsReply")
@@ -700,6 +796,7 @@ type CommonServiceClient interface {
 	Send2Client(ctx context.Context, in *Send2ClientReq, opts ...grpc.CallOption) (*Send2ClientReply, error)
 	CloseClient(ctx context.Context, in *CloseClientReq, opts ...grpc.CallOption) (*CloseClientReply, error)
 	BindGroup(ctx context.Context, in *BindGroupReq, opts ...grpc.CallOption) (*BindGroupReply, error)
+	SetExtend(ctx context.Context, in *SetExtendReq, opts ...grpc.CallOption) (*SetExtendReply, error)
 	Send2Group(ctx context.Context, in *Send2GroupReq, opts ...grpc.CallOption) (*Send2GroupReply, error)
 	Send2System(ctx context.Context, in *Send2SystemReq, opts ...grpc.CallOption) (*Send2SystemReply, error)
 	GetGroupClients(ctx context.Context, in *GetGroupClientsReq, opts ...grpc.CallOption) (*GetGroupClientsReply, error)
@@ -740,6 +837,15 @@ func (c *commonServiceClient) BindGroup(ctx context.Context, in *BindGroupReq, o
 	return out, nil
 }
 
+func (c *commonServiceClient) SetExtend(ctx context.Context, in *SetExtendReq, opts ...grpc.CallOption) (*SetExtendReply, error) {
+	out := new(SetExtendReply)
+	err := c.cc.Invoke(ctx, "/CommonService/SetExtend", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *commonServiceClient) Send2Group(ctx context.Context, in *Send2GroupReq, opts ...grpc.CallOption) (*Send2GroupReply, error) {
 	out := new(Send2GroupReply)
 	err := c.cc.Invoke(ctx, "/CommonService/Send2Group", in, out, opts...)
@@ -772,6 +878,7 @@ type CommonServiceServer interface {
 	Send2Client(context.Context, *Send2ClientReq) (*Send2ClientReply, error)
 	CloseClient(context.Context, *CloseClientReq) (*CloseClientReply, error)
 	BindGroup(context.Context, *BindGroupReq) (*BindGroupReply, error)
+	SetExtend(context.Context, *SetExtendReq) (*SetExtendReply, error)
 	Send2Group(context.Context, *Send2GroupReq) (*Send2GroupReply, error)
 	Send2System(context.Context, *Send2SystemReq) (*Send2SystemReply, error)
 	GetGroupClients(context.Context, *GetGroupClientsReq) (*GetGroupClientsReply, error)
@@ -831,6 +938,24 @@ func _CommonService_BindGroup_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CommonServiceServer).BindGroup(ctx, req.(*BindGroupReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CommonService_SetExtend_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetExtendReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommonServiceServer).SetExtend(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/CommonService/SetExtend",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommonServiceServer).SetExtend(ctx, req.(*SetExtendReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -904,6 +1029,10 @@ var _CommonService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BindGroup",
 			Handler:    _CommonService_BindGroup_Handler,
+		},
+		{
+			MethodName: "SetExtend",
+			Handler:    _CommonService_SetExtend_Handler,
 		},
 		{
 			MethodName: "Send2Group",

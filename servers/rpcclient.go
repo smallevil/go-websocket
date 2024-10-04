@@ -82,6 +82,23 @@ func SendRpcBindGroup(addr string, systemId string, groupName string, clientId s
 	}
 }
 
+//设置扩展
+func SendRpcSetExtend(addr string, systemId string, clientId string, userId string, extend string) {
+	conn := grpcConn(addr)
+	defer conn.Close()
+
+	c := pb.NewCommonServiceClient(conn)
+	_, err := c.SetExtend(context.Background(), &pb.SetExtendReq{
+		SystemId:  systemId,
+		ClientId:  clientId,
+		UserId:    userId,
+		Extend:    extend,
+	})
+	if err != nil {
+		log.Errorf("failed to call: %v", err)
+	}
+}
+
 //发送分组消息
 func SendGroupBroadcast(systemId string, messageId, sendUserId, groupName string, code int, message string, data *string) {
 	setting.GlobalSetting.ServerListLock.Lock()

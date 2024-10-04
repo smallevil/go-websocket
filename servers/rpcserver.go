@@ -43,6 +43,17 @@ func (this *CommonServiceServer) BindGroup(ctx context.Context, req *pb.BindGrou
 	return &pb.BindGroupReply{}, nil
 }
 
+//设置扩展
+func (this *CommonServiceServer) SetExtend(ctx context.Context, req *pb.SetExtendReq) (*pb.SetExtendReply, error) {
+	if client, err := Manager.GetByClientId(req.ClientId); err == nil {
+		//添加到本地
+		Manager.SetClientExtend(client, req.UserId, req.Extend)
+	} else {
+		log.Error("设置扩展失败" + err.Error())
+	}
+	return &pb.SetExtendReply{}, nil
+}
+
 func (this *CommonServiceServer) Send2Group(ctx context.Context, req *pb.Send2GroupReq) (*pb.Send2GroupReply, error) {
 	log.WithFields(log.Fields{
 		"host": setting.GlobalSetting.LocalHost,
