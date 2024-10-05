@@ -97,6 +97,40 @@ func CloseClient(clientId, systemId string) {
 	return
 }
 
+//关闭客户端
+func GetClientInfo(clientId, systemId string) (*Client) {
+	if util.IsCluster() {
+		//addr, _, _, isLocal, err := util.GetAddrInfoAndIsLocal(clientId)
+		_, _, _, isLocal, err := util.GetAddrInfoAndIsLocal(clientId)
+		if err != nil {
+			log.Errorf("%s", err)
+			return nil
+		}
+
+		//如果是本机则发送到本机
+		if isLocal {
+			if clientInfo, err := Manager.GetByClientId(clientId); err == nil {
+				return clientInfo
+			} else {
+				return nil
+			}
+		} else {
+			//信息非本机,需要使用rpc,太复杂了,暂时不实现
+			//GetRpcClientInfo(addr, clientId, systemId)
+			return nil
+		}
+	} else {
+		//如果是单机服务，则只发送到本机
+		if clientInfo, err := Manager.GetByClientId(clientId); err == nil {
+				return clientInfo
+			} else {
+				return nil
+			}
+	}
+
+	return nil
+}
+
 //设置客户端扩展字段
 func SetClientExtend(systemId string, clientId string, userId string, extend string) {
 	//如果是集群则用redis共享数据

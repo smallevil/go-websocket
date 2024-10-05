@@ -19,6 +19,7 @@ class WsServer
     const API_URL_SET_EXTEND = '/api/set_extend'; //设置客户端业务扩展
     const API_URL_SEND_TO_GROUP = '/api/send_to_group'; //发送给指定分组
     const API_URL_GET_ONLINE_LIST = '/api/get_online_list'; //获取在线客户端列表
+    const API_URL_GET_CLIENT_INFO = '/api/get_client_info'; //获取在线客户端信息
     const API_URL_CLOSE_CLIENT = '/api/close_client'; //主动关闭连接
 
     /**
@@ -135,6 +136,21 @@ class WsServer
                 'clientId'  => $clientId,
                 'userId'    => $userId,
                 'extend'    => $extend,
+            ]
+        ), $systemId, true);
+    }
+
+    /**
+     * 得到clientId的信息
+     *
+     * @param string $systemId  系统ID
+     * @param string $clientId  连接ID
+     */
+    public function getClientInfo(string $systemId, string $clientId)
+    {
+        return $this->_request(self::API_URL_GET_CLIENT_INFO, $this->_buildParam(
+            [
+                'clientId'  => $clientId,
             ]
         ), $systemId, true);
     }
