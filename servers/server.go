@@ -171,15 +171,16 @@ func SendMessage2Group(systemId, sendUserId, groupName string, code int, msg str
 }
 
 //发送信息到指定系统
-func SendMessage2System(systemId, sendUserId string, code int, msg string, data string) {
-	messageId := util.GenUUID()
+func SendMessage2System(systemId, sendUserId string, code int, msg string, data string) (messageId string) {
+	messageId = util.GenUUID()
 	if util.IsCluster() {
 		//发送到系统广播
-		SendSystemBroadcast(systemId, messageId, sendUserId, code, msg, &data)
+		go SendSystemBroadcast(systemId, messageId, sendUserId, code, msg, &data)
 	} else {
 		//如果是单机服务，则只发送到本机
 		Manager.SendMessage2LocalSystem(systemId, messageId, sendUserId, code, msg, &data)
 	}
+	return
 }
 
 //获取分组列表

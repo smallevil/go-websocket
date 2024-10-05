@@ -13,7 +13,7 @@ type Controller struct {
 
 type inputData struct {
 	SendUserId string `json:"sendUserId"`
-	GroupName  string `json:"groupName" validate:"required"`
+	GroupName  string `json:"groupName"`
 	Code       int    `json:"code"`
 	Msg        string `json:"msg"`
 	Data       string `json:"data"`
@@ -32,8 +32,14 @@ func (c *Controller) Run(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	messageId := ""
 	systemId := r.Header.Get("SystemId")
-	messageId := servers.SendMessage2Group(systemId, inputData.SendUserId, inputData.GroupName, inputData.Code, inputData.Msg, &inputData.Data)
+	if len(inputData.GroupName) > 0 {
+		messageId = servers.SendMessage2Group(systemId, inputData.SendUserId, inputData.GroupName, inputData.Code, inputData.Msg, &inputData.Data)
+	} else {
+		messageId = servers.SendMessage2System(systemId, inputData.SendUserId, inputData.Code, inputData.Msg, inputData.Data)
+	}
+
 
 	api.Render(w, retcode.SUCCESS, "success", map[string]string{
 		"messageId": messageId,
