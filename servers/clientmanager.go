@@ -14,7 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"io/ioutil"
+	//"io/ioutil"
 	//"fmt"
 )
 
@@ -75,8 +75,6 @@ func (manager *ClientManager) EventConnect(client *Client) {
 		return client.Socket.WriteMessage(websocket.PongMessage, []byte(""))
 	})
 
-	CallHookUrl(client, "online")
-
 	log.WithFields(log.Fields{
 		"host":     setting.GlobalSetting.LocalHost,
 		"port":     setting.CommonSetting.HttpPort,
@@ -85,12 +83,13 @@ func (manager *ClientManager) EventConnect(client *Client) {
 		"systemId": client.SystemId,
 		"counts":   Manager.Count(),
 	}).Info("客户端已连接")
+
+	callClient := client
+	go CallHookUrl(callClient, "online")
 }
 
 // 断开连接时间
 func (manager *ClientManager) EventDisconnect(client *Client) {
-
-	CallHookUrl(client, "offline")
 
 	//关闭连接
 	_ = client.Socket.Close()
@@ -120,6 +119,9 @@ func (manager *ClientManager) EventDisconnect(client *Client) {
 		"counts":   Manager.Count(),
 		"seconds":  uint64(time.Now().Unix()) - client.ConnectTime,
 	}).Info("客户端已断开")
+
+	callClient := client
+	go CallHookUrl(callClient, "offline")
 
 	//标记销毁
 	client.IsDeleted = true
@@ -329,12 +331,6 @@ func (manager *ClientManager) GetSystemClientList(systemId string) []string {
 
 // hook回调
 func CallHookUrl(client *Client, status string) {
-	/*
-	ai, ok := SystemMap.Load(client.SystemId)
-	fmt.Println(ai)
-	fmt.Println(ok)
-	fmt.Println(client)
-	*/
 
 	var ai accountInfo
 	v, ok := SystemMap.Load(client.SystemId)
@@ -362,14 +358,15 @@ func CallHookUrl(client *Client, status string) {
 	values.Add("ip", ip)
 	values.Add("connect_time", strconv.FormatUint(connectTime, 10))
 	values.Add("last_time", strconv.FormatUint(lastTime, 10))
-	values.Add("keep_seconds", strconv.FormatUint(lastTime - connectTime, 10))
+	values.Add("keep_seconds", strconv.FormatUint(uint64(time.Now().Unix()) - connectTime, 10))
 	values.Add("status", status)
 
 	httpClient := http.Client{
 		Timeout:   2 * time.Second,
-		Transport: &http.Transport{DisableKeepAlives: true},
+		Transport: &http.Transport{DisableKeepAlives: true, MaxIdleConnsPerHost:5, MaxConnsPerHost:10},
 	}
-	resp, err := httpClient.Post(ai.HookUrl, "application/x-www-form-urlencoded", strings.NewReader(values.Encode()))
+
+	_, err := httpClient.Post(ai.HookUrl, "application/x-www-form-urlencoded", strings.NewReader(values.Encode()))
 	if err != nil {
 		log.WithFields(log.Fields{
 			"host":     ai.HookUrl,
@@ -385,6 +382,7 @@ func CallHookUrl(client *Client, status string) {
 		return
 	}
 
+	/*
 	defer resp.Body.Close()
 	_, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -401,4 +399,5 @@ func CallHookUrl(client *Client, status string) {
 		}).Warn("Hook读取失败")
 		return
 	}
+	*/
 }
