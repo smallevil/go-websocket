@@ -63,6 +63,8 @@ func (manager *ClientManager) Start() {
 
 // 建立连接事件
 func (manager *ClientManager) EventConnect(client *Client) {
+	client.Socket.SetReadDeadline(time.Now().Add(60 * time.Second))
+
 	manager.AddClient(client)
 
 	client.Socket.SetPingHandler(func(string) error {
@@ -134,6 +136,7 @@ func (manager *ClientManager) resetClientLastTime(client *Client) {
 	defer manager.ClientIdMapLock.Unlock()
 
 	client.LastTime = uint64(time.Now().Unix())
+	client.Socket.SetReadDeadline(time.Now().Add(60 * time.Second))
 }
 
 // 添加客户端

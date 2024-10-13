@@ -30,7 +30,11 @@ func main() {
 	routers.Init()
 
 	//启动一个定时器用来发送心跳
-	servers.PingTimer()
+	//已改成SetReadDeadline方式,此处不需要再调用了
+	//修改如下:
+	//clientmanager.go里增加SetReadDeadline
+	//client.go里ReadMessage后-1直接主动断开
+	//servers.PingTimer()
 
 	fmt.Printf("服务器启动成功，端口号：%s\n", setting.CommonSetting.HttpPort)
 

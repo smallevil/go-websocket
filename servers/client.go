@@ -3,6 +3,7 @@ package servers
 import (
 	"github.com/gorilla/websocket"
 	"time"
+	//log "github.com/sirupsen/logrus"
 	//"fmt"
 )
 
@@ -44,7 +45,8 @@ func (c *Client) Read() {
 		for {
 			messageType, _, err := c.Socket.ReadMessage()
 			if err != nil {
-				if messageType == -1 && websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure, websocket.CloseNoStatusReceived) {
+				//if messageType == -1 && websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure, websocket.CloseNoStatusReceived) {
+				if messageType == -1 {
 					Manager.DisConnect <- c
 					return
 				} else if messageType != websocket.PingMessage {
